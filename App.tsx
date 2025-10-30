@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useWebRTC } from './hooks/useWebRTC';
 import { ConnectionManager } from './components/ConnectionManager';
@@ -10,6 +9,7 @@ function App() {
     receivedMessages, 
     offerSdp, 
     answerSdp, 
+    errorMessage,
     createOffer, 
     createAnswer, 
     setRemoteAnswer,
@@ -30,8 +30,8 @@ function App() {
               </span>
             </h1>
             <p className="text-center text-text-secondary mb-8">Securely share files & text directly between devices.</p>
-            {connectionState === 'failed' && (
-              <p className="text-center text-red-500 mb-4 font-semibold">Connection failed. Please try again.</p>
+            {errorMessage && (
+              <p className="text-center text-red-500 mb-4 font-semibold">{errorMessage}</p>
             )}
             <ConnectionManager 
               offerSdp={offerSdp}

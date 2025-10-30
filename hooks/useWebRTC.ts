@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ConnectionState, ReceivedMessage, TextMessage, FileInfo, FileMetaMessage, FileEndMessage } from '../types';
 
@@ -13,6 +12,7 @@ export const useWebRTC = () => {
   const [receivedMessages, setReceivedMessages] = useState<ReceivedMessage[]>([]);
   const [offerSdp, setOfferSdp] = useState<string | null>(null);
   const [answerSdp, setAnswerSdp] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const pc = useRef<RTCPeerConnection | null>(null);
   const dc = useRef<RTCDataChannel | null>(null);
@@ -29,6 +29,7 @@ export const useWebRTC = () => {
     setOfferSdp(null);
     setAnswerSdp(null);
     fileReceiver.current = null;
+    setErrorMessage(null);
   }, []);
   
   const handleDataChannelMessage = useCallback((event: MessageEvent) => {
@@ -60,7 +61,15 @@ export const useWebRTC = () => {
             setReceivedMessages(prev => [...prev, textMessage]);
         }
       } catch (error) {
-        console.error("Failed to parse message", error);
+        // If parsing fails, assume it's a plain text message.
+        const textMessage: TextMessage = {
+            type: 'text',
+            id: crypto.randomUUID(),
+            content: event.data,
+            sender: 'peer',
+            timestamp: Date.now(),
+        };
+        setReceivedMessages(prev => [...prev, textMessage]);
       }
     } else if (event.data instanceof ArrayBuffer) {
         if (fileReceiver.current) {
@@ -96,8 +105,8 @@ export const useWebRTC = () => {
     
     peerConnection.onconnectionstatechange = () => {
         if (peerConnection.connectionState === 'failed') {
+            setErrorMessage("Connection failed. This could be due to a network issue or firewall.");
             setConnectionState('failed');
-            resetState();
         }
     };
     
@@ -131,6 +140,7 @@ export const useWebRTC = () => {
       setConnectionState('connecting');
     } catch (error) {
         console.error("Failed to create answer:", error);
+        setErrorMessage("Invalid session offer. Please copy the entire offer text and try again.");
         setConnectionState('failed');
     }
   }, [createPeerConnection, resetState]);
@@ -142,6 +152,7 @@ export const useWebRTC = () => {
         await pc.current!.setRemoteDescription(new RTCSessionDescription(answer));
     } catch (error) {
         console.error("Failed to set remote answer:", error);
+        setErrorMessage("Invalid session answer. Please copy the entire answer text and try again.");
         setConnectionState('failed');
     }
   }, []);
@@ -220,6 +231,7 @@ export const useWebRTC = () => {
     receivedMessages,
     offerSdp,
     answerSdp,
+    errorMessage,
     createOffer,
     createAnswer,
     setRemoteAnswer,
