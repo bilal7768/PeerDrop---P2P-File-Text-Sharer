@@ -1,0 +1,5 @@
+{
+  "name": "PeerDrop - P2P File & Text Sharer",
+  "description": "A secure, serverless peer-to-peer tool for sharing files and text directly between two devices in real-time. No uploads, just a direct connection.",
+  "requestFramePermissions": []
+}
